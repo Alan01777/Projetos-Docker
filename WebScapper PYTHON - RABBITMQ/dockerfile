@@ -1,0 +1,6 @@
+FROM python:3
+
+RUN pip install pika && pip install beautifulsoup4 && pip install requests
+COPY Collect.py /app/
+WORKDIR /app/
+CMD python CollectInfo.py

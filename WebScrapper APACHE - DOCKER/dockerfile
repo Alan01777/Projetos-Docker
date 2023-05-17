@@ -1,0 +1,29 @@
+FROM python:3-slim
+
+RUN apt-get update -y && \
+    apt-get install -y apache2 supervisor
+
+RUN echo "<VirtualHost *:80>\n\
+    ServerAdmin camp.alan3@gmail.com\n\
+    ServerName mysite.com\n\
+    ServerAlias www.mysite.com\n\
+    DocumentRoot /var/www/localhost/\n\
+    ErrorLog \${APACHE_LOG_DIR}/error.log\n\
+    CustomLog \${APACHE_LOG_DIR}/access.log combined\n\
+    </VirtualHost>" > /etc/apache2/sites-available/localhost.conf
+
+RUN a2dissite 000-default.conf && \
+    a2ensite localhost.conf
+
+WORKDIR /app
+
+COPY main.py /app
+
+RUN mkdir /var/www/localhost && \
+    python3 -m pip install requests pandas beautifulsoup4
+
+RUN chmod +x /app/main.py
+
+COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]

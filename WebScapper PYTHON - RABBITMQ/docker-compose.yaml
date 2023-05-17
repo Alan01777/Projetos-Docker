@@ -1,0 +1,71 @@
+version: '3'
+services:
+  db:
+    image: mysql:latest
+    restart: unless-stopped
+    container_name: "mysql_db"
+    environment:
+      TZ: "Brazil"
+      MYSQL_ROOT_PASSWORD: "alan123456789"
+      MYSQL_PASSWORD: "alan123"
+      MYSQL_USER: "jousney"
+      MYSQL_DATABASE: "estudantes"
+    volumes:
+      - db:/var/lib/mysql
+    networks:
+      rabbitmqNET:
+        ipv4_address: 172.20.0.2
+
+  adminer:
+    image: adminer:latest
+    restart: always
+    container_name: adminer
+    ports:
+      - 8080:8080
+    depends_on:
+      - db
+    networks:
+      rabbitmqNET:
+        ipv4_address: 172.20.0.3
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: 'rabbitmq'
+    environment:
+      - RABBITMQ_DEFAULT_USER=jousney
+      - RABBITMQ_DEFAULT_PASS=alan123
+    ports:
+        - 5672:5672
+        - 15672:15672
+    volumes:
+        - rabbitmq-data:/var/lib/rabbitmq/
+        - rabbitmq-log:/var/log/rabbitmq/
+    depends_on:
+      - db
+    networks:
+      rabbitmqNET:
+        ipv4_address: 172.20.0.4
+
+  wescrapper:
+    image: alan01777/web_scrapper_temperatura
+    container_name: web_scrapper_temperatura
+    restart: always
+    depends_on:
+      - rabbitmq
+    volumes:
+      - db:/app/WebScrapper/db
+    networks:
+      rabbitmqNET:
+        ipv4_address: 172.20.0.5
+
+volumes:
+  rabbitmq-data:
+  rabbitmq-log:
+  db:
+
+networks:
+  rabbitmqNET:
+    ipam:
+      driver: default
+      config:
+      - subnet: 172.20.0.0/16
